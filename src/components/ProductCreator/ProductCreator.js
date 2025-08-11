@@ -41,13 +41,16 @@ const ProductCreator = () => {
     try {
       // Create product using real API
       const productData = {
-        name: formData.productName,
-        category: formData.category,
-        target_demographics: formData.targetAudience,
-        region: formData.region,
-        ingredients: formData.ingredients,
-        flavor_profile: formData.flavorProfile
+        name: formData.step4.selectedSuggestion?.name || formData.step4.customName,
+        category: formData.step1.category,
+        target_demographics: formData.step2.ageGroup,
+        region: formData.step2.region,
+        ingredients: formData.step4.selectedSuggestion?.description || 'Custom product',
+        flavor_profile: formData.step3.flavors.join(', ')
       };
+      
+      console.log('Form data structure:', formData);
+      console.log('Product data being sent:', productData);
       
       const response = await productsAPI.create(productData);
       
