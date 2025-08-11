@@ -1,7 +1,8 @@
 // API service layer for handling backend calls
 // Enhanced with proper error handling and loading states
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 
 // Global context reference for loading and error states
 let globalContext = null;
