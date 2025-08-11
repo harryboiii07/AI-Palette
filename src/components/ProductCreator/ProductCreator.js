@@ -4,6 +4,7 @@ import StepIndicator from './StepIndicator';
 import ErrorMessage from '../common/ErrorMessage';
 import LoadingSpinner from '../common/LoadingSpinner';
 import SuccessMessage from '../common/SuccessMessage';
+import { productsAPI } from '../../services/api';
 
 const ProductCreator = () => {
   const { 
@@ -38,13 +39,29 @@ const ProductCreator = () => {
   const handleFormSubmit = async () => {
     setLoading('submitProduct', true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setSuccess('submitProduct', 'Product created successfully!');
-      resetForm();
-      navigateToStep(1);
+      // Create product using real API
+      const productData = {
+        name: formData.productName,
+        category: formData.category,
+        target_demographics: formData.targetAudience,
+        region: formData.region,
+        ingredients: formData.ingredients,
+        flavor_profile: formData.flavorProfile
+      };
+      
+      const response = await productsAPI.create(productData);
+      
+      if (response.success && response.data) {
+        setSuccess('submitProduct', `Product "${response.data.name}" created successfully with market score: ${response.data.market_score}!`);
+        resetForm();
+        navigateToStep(1);
+      } else {
+        throw new Error('Invalid response format from server');
+      }
     } catch (error) {
       console.error('Failed to create product:', error);
+      // For now, just log the error - the API service handles global error states
+      alert(`Failed to create product: ${error.message}`);
     } finally {
       setLoading('submitProduct', false);
     }

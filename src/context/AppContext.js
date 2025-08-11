@@ -330,14 +330,14 @@ export const AppProvider = ({ children }) => {
 
   // Sample data - will be moved to API service later
   const dashboardData = {
-    totalProducts: 247,
-    successRate: 87,
-    activeUsers: 1432,
-    trendingCategories: 5,
+    totalProducts: 0,
+    successRate: 0,
+    activeUsers: 0,
+    trendingCategories: 0,
     growthMetrics: {
-      productsGrowth: 12,
-      successRateGrowth: 3,
-      usersGrowth: 8
+      productsGrowth: 0,
+      successRateGrowth: 0,
+      usersGrowth: 0
     },
     chartData: [
       { month: 'Jan', beverages: 65, snacks: 45, dairy: 30 },

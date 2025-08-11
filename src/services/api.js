@@ -65,25 +65,57 @@ const simulateDelay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, 
 
 // Dashboard API calls
 export const dashboardAPI = {
-  getMetrics: async () => {
-    await simulateDelay(800);
+  // Get dashboard metrics from real backend endpoint with filters
+  getMetrics: async (filters = {}) => {
+    const queryParams = new URLSearchParams();
     
-    // Simulate occasional errors for testing
-    if (Math.random() < 0.1) {
-      throw new Error('Failed to fetch dashboard metrics');
-    }
+    // Default values
+    const region = filters.region || 'Global';
+    const timeframe = filters.timeframe || '30d';
     
-    return {
-      totalProducts: 247,
-      successRate: 87,
-      activeUsers: 1432,
-      trendingCategories: 5,
-      growthMetrics: {
-        productsGrowth: 12,
-        successRateGrowth: 3,
-        usersGrowth: 8
-      }
+    queryParams.append('region', region);
+    queryParams.append('timeframe', timeframe);
+    
+    const endpoint = `/api/dashboard/metrics?${queryParams.toString()}`;
+    
+    return await apiRequest(endpoint, {
+      method: 'GET'
+    }, 'dashboard');
+  },
+
+  // Direct API call without global loading states (for polling)
+  getMetricsQuiet: async (filters = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    // Default values
+    const region = filters.region || 'Global';
+    const timeframe = filters.timeframe || '30d';
+    
+    queryParams.append('region', region);
+    queryParams.append('timeframe', timeframe);
+    
+    const url = `${API_BASE_URL}/api/dashboard/metrics?${queryParams.toString()}`;
+    const config = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     };
+
+    try {
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
   },
 
   getTrends: async () => {
@@ -140,6 +172,33 @@ export const productsAPI = {
       created: new Date().toISOString().split('T')[0],
       score: Math.floor(Math.random() * 20) + 80
     };
+  },
+
+  // New API methods for backend integration
+  getAll: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    // Add parameters if provided
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.category) queryParams.append('category', params.category);
+    if (params.search) queryParams.append('search', params.search);
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    
+    const endpoint = `/api/products${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    
+    return await apiRequest(endpoint, {
+      method: 'GET'
+    }, 'products');
+  },
+  
+  // Create new product using real API
+  create: async (productData) => {
+    console.log('Creating product with data:', productData);
+    return await apiRequest('/api/products', {
+      method: 'POST',
+      body: JSON.stringify(productData)
+    }, 'createProduct');
   },
 
   updateProduct: async (productId, productData) => {
