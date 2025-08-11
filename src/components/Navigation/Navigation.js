@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAppContext } from '../../context/AppContext';
-import UserPreferences from '../common/UserPreferences';
 
 const Navigation = () => {
   const { currentScreen, setCurrentScreen } = useAppContext();
-  const [showPreferences, setShowPreferences] = useState(false);
   return (
     <nav style={{
       backgroundColor: 'white',
@@ -16,7 +14,7 @@ const Navigation = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>FlavorForge</h1>
           <div style={{ display: 'flex', gap: '24px' }}>
-            {['dashboard', 'creator', 'analysis', 'intelligence'].map(screen => (
+            {['dashboard', 'creator', 'analysis', 'intelligence', 'competitors'].map(screen => (
               <button
                 key={screen}
                 onClick={() => setCurrentScreen(screen)}
@@ -33,26 +31,13 @@ const Navigation = () => {
                 {screen === 'creator' ? 'Create Product' :
                   screen === 'analysis' ? 'Product Analysis' :
                     screen === 'intelligence' ? 'Market Intelligence' :
-                      'Dashboard'}
+                      screen === 'competitors' ? 'Competitors' :
+                        'Dashboard'}
               </button>
             ))}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={() => setShowPreferences(true)}
-            style={{
-              backgroundColor: '#f3f4f6',
-              color: '#6b7280',
-              padding: '8px 12px',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            ⚙️ Preferences
-          </button>
           <button style={{
             backgroundColor: '#2563eb',
             color: 'white',
@@ -65,11 +50,7 @@ const Navigation = () => {
           </button>
         </div>
       </div>
-      
-      <UserPreferences 
-        isOpen={showPreferences}
-        onClose={() => setShowPreferences(false)}
-      />
+
     </nav>
   );
 };

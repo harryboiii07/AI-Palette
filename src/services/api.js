@@ -242,6 +242,29 @@ export const productsAPI = {
     }, 'createProduct');
   },
 
+  // Analyze product concept using real API
+  analyzeProduct: async (productConcept) => {
+    console.log('🔬 Analyzing product concept:', productConcept);
+    
+    try {
+      const result = await apiRequest('/api/analyze-product', {
+        method: 'POST',
+        body: JSON.stringify(productConcept)
+      }, 'analyzeProduct');
+      
+      console.log('✅ Product analysis completed:', result);
+      return result;
+    } catch (error) {
+      console.error('💥 Product analysis failed:', error);
+      console.error('🔍 Analysis error details:', {
+        productConcept,
+        error: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  },
+
   updateProduct: async (productId, productData) => {
     await simulateDelay(1000);
     return { id: productId, ...productData };
@@ -485,6 +508,43 @@ export const marketAPI = {
       }
     } catch (error) {
       console.error('💥 getFilterOptions failed:', error);
+      throw error;
+    }
+  }
+};
+
+// Competitors API calls
+export const competitorsAPI = {
+  // Get competitors with optional category filter
+  getCompetitors: async (filters = {}) => {
+    console.log('🏆 getCompetitors called with filters:', filters);
+    
+    const queryParams = new URLSearchParams();
+    
+    // Add optional category filter
+    if (filters.category) {
+      queryParams.append('category', filters.category);
+      console.log('📂 Added category filter:', filters.category);
+    }
+    
+    const endpoint = `/api/competitors${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    console.log('🎯 Making API request to:', `${API_BASE_URL}${endpoint}`);
+    
+    try {
+      const result = await apiRequest(endpoint, {
+        method: 'GET'
+      }, 'competitors');
+      
+      console.log('✅ getCompetitors API call successful, result:', result);
+      return result;
+    } catch (error) {
+      console.error('💥 getCompetitors API call failed:', error);
+      console.error('🔍 Error details:', {
+        message: error.message,
+        stack: error.stack,
+        endpoint,
+        filters
+      });
       throw error;
     }
   }

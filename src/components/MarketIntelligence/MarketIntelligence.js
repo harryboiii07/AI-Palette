@@ -12,7 +12,6 @@ const MarketIntelligence = () => {
   const [trendingIngredients, setTrendingIngredients] = useState([]);
   const [regionalData, setRegionalData] = useState([]);
   const [timeSeriesData, setTimeSeriesData] = useState([]);
-  const [competitorsData, setCompetitorsData] = useState([]);
   const [filterOptions, setFilterOptions] = useState({ ingredients: [], regions: [], categories: [] });
   
   // State for filters
@@ -78,25 +77,22 @@ const MarketIntelligence = () => {
     
     try {
       console.log('🔄 Making parallel API calls...');
-      const [ingredients, regional, timeSeries, competitors] = await Promise.all([
+      const [ingredients, regional, timeSeries] = await Promise.all([
         marketAPI.getTrendingIngredients(filters),
         marketAPI.getRegionalData(filters),
-        marketAPI.getTimeSeriesData(filters),
-        marketAPI.getCompetitors()
+        marketAPI.getTimeSeriesData(filters)
       ]);
       
       console.log('✅ All API calls completed successfully');
       console.log('📈 Results:', {
         ingredients: ingredients.length,
         regional: regional.length,
-        timeSeries: timeSeries.length,
-        competitors: competitors.length
+        timeSeries: timeSeries.length
       });
       
       setTrendingIngredients(ingredients);
       setRegionalData(regional);
       setTimeSeriesData(timeSeries);
-      setCompetitorsData(competitors);
       
       console.log('✅ State updated successfully');
     } catch (error) {
@@ -329,30 +325,30 @@ const MarketIntelligence = () => {
                   No trending ingredients found for the selected filters.
                 </div>
               ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {displayedIngredients.map((ingredient, idx) => (
                     <div key={idx} style={{ padding: '12px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '8px', height: '8px', backgroundColor: '#2563eb', borderRadius: '50%' }}></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '8px', height: '8px', backgroundColor: '#2563eb', borderRadius: '50%' }}></div>
                           <span style={{ fontWeight: '600', fontSize: '16px' }}>{ingredient.name}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                          <div style={{ textAlign: 'right' }}>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '14px', fontWeight: '500' }}>Avg: {ingredient.score}</div>
                             {ingredient.maxScore && (
                               <div style={{ fontSize: '12px', color: '#6b7280' }}>Peak: {ingredient.maxScore}</div>
                             )}
-                            <div style={{ width: '80px', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px' }}>
-                              <div style={{
+                    <div style={{ width: '80px', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px' }}>
+                      <div style={{
                                 width: `${Math.min(ingredient.score, 100)}%`,
-                                height: '8px',
-                                backgroundColor: '#2563eb',
-                                borderRadius: '4px'
-                              }}></div>
-                            </div>
-                          </div>
-                          <span style={{ color: '#10b981', fontSize: '14px', fontWeight: '500' }}>{ingredient.growth}</span>
+                        height: '8px',
+                        backgroundColor: '#2563eb',
+                        borderRadius: '4px'
+                      }}></div>
+                    </div>
+                  </div>
+                  <span style={{ color: '#10b981', fontSize: '14px', fontWeight: '500' }}>{ingredient.growth}</span>
                         </div>
                       </div>
                       
@@ -370,10 +366,10 @@ const MarketIntelligence = () => {
                             {ingredient.categories.length > 2 && ` +${ingredient.categories.length - 2} more`}
                           </span>
                         )}
-                      </div>
-                    </div>
-                  ))}
                 </div>
+              </div>
+            ))}
+          </div>
               )}
         </div>
 
@@ -444,33 +440,7 @@ const MarketIntelligence = () => {
             )}
       </div>
 
-          {/* Competitive Landscape */}
-      <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 16px 0' }}>Competitive Landscape</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-          {competitorsData.map((competitor, idx) => (
-            <div key={idx} style={{ padding: '16px', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-              <h4 style={{ fontWeight: '500', margin: '0 0 8px 0' }}>{competitor.company}</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#6b7280' }}>Products:</span>
-                  <span>{competitor.products}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#6b7280' }}>Avg Score:</span>
-                  <span>{competitor.score}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#6b7280' }}>Growth:</span>
-                  <span style={{ color: competitor.trend.startsWith('+') ? '#10b981' : '#ef4444' }}>
-                    {competitor.trend}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+          
         </>
       )}
     </div>

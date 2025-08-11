@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard/Dashboard';
 import ProductCreator from './components/ProductCreator/ProductCreator';
 import ProductAnalysis from './components/ProductAnalysis/ProductAnalysis';
 import MarketIntelligence from './components/MarketIntelligence/MarketIntelligence';
+import Competitors from './components/Competitors/Competitors';
 import { initializeAPI } from './services/api';
 
 const AppContent = () => {
@@ -28,6 +29,8 @@ const AppContent = () => {
         return <ProductAnalysis />;
       case 'intelligence':
         return <MarketIntelligence />;
+      case 'competitors':
+        return <Competitors />;
       default:
         return <Dashboard />;
     }
@@ -52,7 +55,8 @@ const AppContent = () => {
           {currentScreen === 'creator' ? 'Create Product' :
             currentScreen === 'analysis' ? 'Product Analysis' :
               currentScreen === 'intelligence' ? 'Market Intelligence' :
-                'Dashboard'}
+                currentScreen === 'competitors' ? 'Competitors' :
+                  'Dashboard'}
         </p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
 import StepIndicator from './StepIndicator';
 import ErrorMessage from '../common/ErrorMessage';
@@ -15,8 +15,10 @@ const ProductCreator = () => {
     updateFormData, 
     resetForm,
     getFormErrors,
+    validateStep,
     isLoading,
     getError,
+    setError,
     getSuccess,
     clearError,
     clearSuccess,
@@ -24,16 +26,68 @@ const ProductCreator = () => {
     setLoading
   } = useAppContext();
 
-  const handleNextStep = () => {
+  // State for product analysis
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [showAnalysis, setShowAnalysis] = useState(false);
+
+  const handleNextStep = async () => {
     if (currentStep < 4) {
       navigateToStep(currentStep + 1);
     } else {
-      handleFormSubmit();
+      await handleProductAnalysis();
     }
   };
 
   const handlePreviousStep = () => {
     navigateToStep(Math.max(1, currentStep - 1));
+  };
+
+  const handleProductAnalysis = async () => {
+    console.log('🔬 Starting product analysis...');
+    setLoading('analyzeProduct', true);
+    clearError('analyzeProduct');
+    
+    try {
+      // Validate all steps before analyzing
+      const allStepsValid = [1, 2, 3, 4].every(step => validateStep(step));
+      
+      if (!allStepsValid) {
+        throw new Error('Please complete all required fields before analysis');
+      }
+
+      // Prepare product concept for analysis
+      const productConcept = {
+        name: formData.step4.selectedSuggestion?.name || formData.step4.customName,
+        category: formData.step1.category,
+        ingredients: formData.step4.selectedSuggestion?.description || formData.step4.customName || 'Custom ingredients',
+        target_demographics: formData.step2.ageGroup,
+        region: formData.step2.region,
+        flavor_profile: formData.step3.flavors?.join(', ') || '',
+        description: formData.step4.selectedSuggestion?.description || `Custom ${formData.step1.category} product`
+      };
+      
+      // Validate required fields
+      if (!productConcept.name || !productConcept.category || !productConcept.target_demographics || !productConcept.region) {
+        throw new Error('Missing required product information for analysis');
+      }
+      
+      console.log('📊 Analyzing product concept:', productConcept);
+      
+      const analysisResponse = await productsAPI.analyzeProduct(productConcept);
+      
+      if (analysisResponse.success && analysisResponse.data) {
+        setAnalysisResult(analysisResponse.data);
+        setShowAnalysis(true);
+        console.log('✅ Analysis completed successfully:', analysisResponse.data);
+      } else {
+        throw new Error('Invalid analysis response format from server');
+      }
+    } catch (error) {
+      console.error('💥 Product analysis failed:', error);
+      setError('analyzeProduct', `Analysis failed: ${error.message}`);
+    } finally {
+      setLoading('analyzeProduct', false);
+    }
   };
 
   const handleFormSubmit = async () => {
@@ -55,8 +109,13 @@ const ProductCreator = () => {
       const response = await productsAPI.create(productData);
       
       if (response.success && response.data) {
-        setSuccess('submitProduct', `Product "${response.data.name}" created successfully with market score: ${response.data.market_score}!`);
+        const marketScore = analysisResult?.overall_score || response.data.market_score || 'N/A';
+        setSuccess('submitProduct', `Product "${response.data.name}" created successfully with market score: ${marketScore}!`);
+        
+        // Reset form and analysis state
         resetForm();
+        setAnalysisResult(null);
+        setShowAnalysis(false);
         navigateToStep(1);
       } else {
         throw new Error('Invalid response format from server');
@@ -84,6 +143,20 @@ const ProductCreator = () => {
 
   const handleSuggestionSelect = (suggestion) => {
     updateFormData('step4', { selectedSuggestion: suggestion });
+    // Reset analysis when selection changes
+    if (showAnalysis) {
+      setShowAnalysis(false);
+      setAnalysisResult(null);
+    }
+  };
+
+  const handleCustomNameChange = (value) => {
+    updateFormData('step4', { customName: value });
+    // Reset analysis when custom name changes
+    if (showAnalysis) {
+      setShowAnalysis(false);
+      setAnalysisResult(null);
+    }
   };
 
   const renderStepContent = () => {
@@ -271,7 +344,7 @@ const ProductCreator = () => {
                 type="text"
                 placeholder="Enter custom product name..."
                 value={formData.step4.customName || ''}
-                onChange={(e) => updateFormData('step4', { customName: e.target.value })}
+                onChange={(e) => handleCustomNameChange(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -281,6 +354,99 @@ const ProductCreator = () => {
                 }}
               />
             </div>
+
+            {/* Analysis Results Display */}
+            {showAnalysis && analysisResult && (
+              <div style={{ marginTop: '24px', padding: '20px', backgroundColor: 'white', border: '2px solid #10b981', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <div style={{ width: '24px', height: '24px', backgroundColor: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ color: 'white', fontSize: '14px', fontWeight: 'bold' }}>✓</span>
+                  </div>
+                  <h4 style={{ fontSize: '18px', fontWeight: '600', margin: 0, color: '#065f46' }}>Analysis Complete!</h4>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '16px' }}>
+                  <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>{analysisResult.overall_score}</div>
+                    <div style={{ fontSize: '14px', color: '#0369a1' }}>Overall Score</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>{analysisResult.market_demand}</div>
+                    <div style={{ fontSize: '14px', color: '#0369a1' }}>Market Demand</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>{analysisResult.ingredient_trends}</div>
+                    <div style={{ fontSize: '14px', color: '#0369a1' }}>Ingredient Trends</div>
+                  </div>
+                  <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '8px' }}>
+                    <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0369a1' }}>{analysisResult.innovation_factor}</div>
+                    <div style={{ fontSize: '14px', color: '#0369a1' }}>Innovation Factor</div>
+                  </div>
+                </div>
+
+                <div style={{ padding: '12px', backgroundColor: '#ecfdf5', borderRadius: '8px', marginBottom: '16px' }}>
+                  <h5 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 8px 0', color: '#065f46' }}>Recommendation</h5>
+                  <p style={{ fontSize: '14px', margin: 0, color: '#047857' }}>{analysisResult.recommendation}</p>
+                </div>
+
+                {analysisResult.analysis_breakdown && (
+                  <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', marginBottom: '16px' }}>
+                    <h5 style={{ fontSize: '14px', fontWeight: '600', margin: '0 0 8px 0', color: '#374151' }}>Analysis Breakdown</h5>
+                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                      <div>Trending Ingredients: {analysisResult.analysis_breakdown.ingredient_analysis?.trending_ingredients}/
+                      {analysisResult.analysis_breakdown.ingredient_analysis?.total_ingredients}</div>
+                      <div>Regional Match: {analysisResult.analysis_breakdown.ingredient_analysis?.regional_match}</div>
+                      <div>Category Saturation: {analysisResult.analysis_breakdown.market_positioning?.category_saturation}</div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button 
+                    onClick={() => {
+                      setShowAnalysis(false);
+                      setAnalysisResult(null);
+                    }}
+                    style={{
+                      flex: '0 0 auto',
+                      padding: '12px 16px',
+                      backgroundColor: '#f3f4f6',
+                      color: '#6b7280',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Analyze Again
+                  </button>
+                  
+                  <button 
+                    onClick={handleFormSubmit}
+                    disabled={isLoading('submitProduct')}
+                    style={{
+                      flex: '1',
+                      padding: '12px',
+                      backgroundColor: isLoading('submitProduct') ? '#9ca3af' : '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: isLoading('submitProduct') ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {isLoading('submitProduct') && <LoadingSpinner size="small" message="" />}
+                    {isLoading('submitProduct') ? 'Creating Product...' : 'Create Product'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -303,6 +469,12 @@ const ProductCreator = () => {
           <ErrorMessage 
             error={getError('submitProduct')}
             onDismiss={() => clearError('submitProduct')}
+          />
+        )}
+        {getError('analyzeProduct') && (
+          <ErrorMessage 
+            error={getError('analyzeProduct')}
+            onDismiss={() => clearError('analyzeProduct')}
           />
         )}
 
@@ -353,29 +525,31 @@ const ProductCreator = () => {
                 Step {currentStep} of 4
               </div>
 
-              <button
-                onClick={handleNextStep}
-                disabled={isLoading('submitProduct')}
-                style={{
-                  padding: '8px 24px',
-                  backgroundColor: isLoading('submitProduct') ? '#9ca3af' : '#2563eb',
-                  color: 'white',
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: isLoading('submitProduct') ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                {isLoading('submitProduct') && (
-                  <LoadingSpinner size="small" message="" />
-                )}
-                {currentStep === 4 ? 
-                  (isLoading('submitProduct') ? 'Creating...' : 'Create Product') : 
-                  'Next'
-                }
-              </button>
+              {!showAnalysis && (
+                <button
+                  onClick={handleNextStep}
+                  disabled={isLoading('analyzeProduct') || isLoading('submitProduct')}
+                  style={{
+                    padding: '8px 24px',
+                    backgroundColor: isLoading('analyzeProduct') || isLoading('submitProduct') ? '#9ca3af' : '#2563eb',
+                    color: 'white',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: isLoading('analyzeProduct') || isLoading('submitProduct') ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {(isLoading('analyzeProduct') || isLoading('submitProduct')) && (
+                    <LoadingSpinner size="small" message="" />
+                  )}
+                  {currentStep === 4 ? 
+                    (isLoading('analyzeProduct') ? 'Analyzing...' : 'Analyze Product') : 
+                    'Next'
+                  }
+                </button>
+              )}
             </div>
           </div>
         </div>
