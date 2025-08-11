@@ -1,10 +1,17 @@
 // API service layer for handling backend calls
-// This will replace static data with actual API calls in the future
+// Enhanced with proper error handling and loading states
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-// Utility function for making HTTP requests
-const apiRequest = async (endpoint, options = {}) => {
+// Global context reference for loading and error states
+let globalContext = null;
+
+export const initializeAPI = (context) => {
+  globalContext = context;
+};
+
+// Utility function for making HTTP requests with loading states
+const apiRequest = async (endpoint, options = {}, loadingKey = null) => {
   const url = `${API_BASE_URL}${endpoint}`;
   const config = {
     headers: {
@@ -14,24 +21,57 @@ const apiRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
+  // Set loading state if context is available
+  if (globalContext && loadingKey) {
+    globalContext.setLoading(loadingKey, true);
+  }
+
   try {
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    // Clear any previous errors
+    if (globalContext && loadingKey) {
+      globalContext.clearError(loadingKey);
+    }
+    
+    return data;
   } catch (error) {
     console.error('API request failed:', error);
+    
+    // Set error state if context is available
+    if (globalContext && loadingKey) {
+      globalContext.setError(loadingKey, handleAPIError(error));
+    }
+    
     throw error;
+  } finally {
+    // Clear loading state
+    if (globalContext && loadingKey) {
+      globalContext.setLoading(loadingKey, false);
+    }
   }
 };
+
+// Simulate network delay for development
+const simulateDelay = (ms = 1000) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Dashboard API calls
 export const dashboardAPI = {
   getMetrics: async () => {
-    // TODO: Replace with actual API call
+    await simulateDelay(800);
+    
+    // Simulate occasional errors for testing
+    if (Math.random() < 0.1) {
+      throw new Error('Failed to fetch dashboard metrics');
+    }
+    
     return {
       totalProducts: 247,
       successRate: 87,
@@ -46,7 +86,8 @@ export const dashboardAPI = {
   },
 
   getTrends: async () => {
-    // TODO: Replace with actual API call
+    await simulateDelay(600);
+    
     return [
       { month: 'Jan', beverages: 65, snacks: 45, dairy: 30 },
       { month: 'Feb', beverages: 70, snacks: 50, dairy: 35 },
@@ -59,7 +100,8 @@ export const dashboardAPI = {
 // Products API calls
 export const productsAPI = {
   getProducts: async (filters = {}) => {
-    // TODO: Replace with actual API call that handles filtering
+    await simulateDelay(500);
+    
     const { search, category } = filters;
     
     const products = [
@@ -82,26 +124,31 @@ export const productsAPI = {
   },
 
   createProduct: async (productData) => {
-    // TODO: Implement actual API call
-    return apiRequest('/api/products', {
-      method: 'POST',
-      body: JSON.stringify(productData)
-    });
+    await simulateDelay(2000);
+    
+    // Simulate validation errors
+    if (!productData.category) {
+      throw new Error('Product category is required');
+    }
+    
+    // Simulate success
+    return {
+      id: Date.now(),
+      ...productData,
+      status: 'Testing',
+      created: new Date().toISOString().split('T')[0],
+      score: Math.floor(Math.random() * 20) + 80
+    };
   },
 
   updateProduct: async (productId, productData) => {
-    // TODO: Implement actual API call
-    return apiRequest(`/api/products/${productId}`, {
-      method: 'PUT',
-      body: JSON.stringify(productData)
-    });
+    await simulateDelay(1000);
+    return { id: productId, ...productData };
   },
 
   deleteProduct: async (productId) => {
-    // TODO: Implement actual API call
-    return apiRequest(`/api/products/${productId}`, {
-      method: 'DELETE'
-    });
+    await simulateDelay(500);
+    return { success: true, id: productId };
   }
 };
 

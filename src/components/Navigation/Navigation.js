@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import UserPreferences from '../common/UserPreferences';
+import StateDemo from '../common/StateDemo';
 
 const Navigation = () => {
   const { currentScreen, setCurrentScreen } = useAppContext();
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
   return (
     <nav style={{
       backgroundColor: 'white',
@@ -36,17 +40,57 @@ const Navigation = () => {
             ))}
           </div>
         </div>
-        <button style={{
-          backgroundColor: '#2563eb',
-          color: 'white',
-          padding: '8px 16px',
-          borderRadius: '8px',
-          border: 'none',
-          cursor: 'pointer'
-        }}>
-          + New Product
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setShowDemo(true)}
+            style={{
+              backgroundColor: '#8b5cf6',
+              color: 'white',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '12px'
+            }}
+          >
+            🚀 Demo
+          </button>
+          <button
+            onClick={() => setShowPreferences(true)}
+            style={{
+              backgroundColor: '#f3f4f6',
+              color: '#6b7280',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            ⚙️ Preferences
+          </button>
+          <button style={{
+            backgroundColor: '#2563eb',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer'
+          }}>
+            + New Product
+          </button>
+        </div>
       </div>
+      
+      <UserPreferences 
+        isOpen={showPreferences}
+        onClose={() => setShowPreferences(false)}
+      />
+      
+      <StateDemo 
+        isOpen={showDemo}
+        onClose={() => setShowDemo(false)}
+      />
     </nav>
   );
 };

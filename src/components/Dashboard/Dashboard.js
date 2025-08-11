@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAppContext } from '../../context/AppContext';
 import MetricsCard from './MetricsCard';
 import RecentActivity from './RecentActivity';
+import LoadingSpinner from '../common/LoadingSpinner';
+import ErrorMessage from '../common/ErrorMessage';
 
 const Dashboard = () => {
-  const { dashboardData, productsData, setCurrentScreen } = useAppContext();
+  const { 
+    dashboardData, 
+    productsData, 
+    setCurrentScreen,
+    isLoading,
+    setLoading,
+    getError,
+    setError,
+    clearError
+  } = useAppContext();
 
   const trendData = [
     { month: 'Jan', beverages: 65, snacks: 45, dairy: 30 },
@@ -14,12 +25,48 @@ const Dashboard = () => {
     { month: 'Apr', beverages: 80, snacks: 60, dairy: 45 },
   ];
 
+  // Simulate loading dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setLoading('dashboard', true);
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        clearError('dashboard');
+      } catch (error) {
+        setError('dashboard', 'Failed to load dashboard data');
+      } finally {
+        setLoading('dashboard', false);
+      }
+    };
+
+    loadDashboardData();
+  }, [setLoading, setError, clearError]);
+
   const handleViewAllProducts = () => {
     setCurrentScreen('analysis');
   };
 
+  if (isLoading('dashboard')) {
+    return (
+      <div style={{ padding: '24px 15%' }}>
+        <LoadingSpinner 
+          size="large" 
+          message="Loading dashboard data..." 
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: '24px 15%' }}>
+      {getError('dashboard') && (
+        <ErrorMessage 
+          error={getError('dashboard')}
+          onDismiss={() => clearError('dashboard')}
+        />
+      )}
+      
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' }}>
         <MetricsCard
           title="Total Products"

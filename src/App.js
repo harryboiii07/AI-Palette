@@ -1,5 +1,5 @@
 // App.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import { AppProvider, useAppContext } from './context/AppContext';
 import Navigation from './components/Navigation/Navigation';
@@ -7,9 +7,16 @@ import Dashboard from './components/Dashboard/Dashboard';
 import ProductCreator from './components/ProductCreator/ProductCreator';
 import ProductAnalysis from './components/ProductAnalysis/ProductAnalysis';
 import MarketIntelligence from './components/MarketIntelligence/MarketIntelligence';
+import { initializeAPI } from './services/api';
 
 const AppContent = () => {
-  const { currentScreen } = useAppContext();
+  const context = useAppContext();
+  const { currentScreen } = context;
+
+  // Initialize API with context for global loading/error handling
+  useEffect(() => {
+    initializeAPI(context);
+  }, [context]);
 
   const renderCurrentScreen = () => {
     switch (currentScreen) {
