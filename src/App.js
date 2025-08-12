@@ -8,6 +8,8 @@ import ProductCreator from './components/ProductCreator/ProductCreator';
 import ProductAnalysis from './components/ProductAnalysis/ProductAnalysis';
 import MarketIntelligence from './components/MarketIntelligence/MarketIntelligence';
 import Competitors from './components/Competitors/Competitors';
+import FrontendDocs from './components/DeveloperDocs/FrontendDocs';
+import BackendDocs from './components/DeveloperDocs/BackendDocs';
 import { initializeAPI } from './services/api';
 
 const AppContent = () => {
@@ -31,6 +33,10 @@ const AppContent = () => {
         return <MarketIntelligence />;
       case 'competitors':
         return <Competitors />;
+      case 'frontend-docs':
+        return <FrontendDocs />;
+      case 'backend-docs':
+        return <BackendDocs />;
       default:
         return <Dashboard />;
     }
@@ -56,7 +62,9 @@ const AppContent = () => {
             currentScreen === 'analysis' ? 'Product Analysis' :
               currentScreen === 'intelligence' ? 'Market Intelligence' :
                 currentScreen === 'competitors' ? 'Competitors' :
-                  'Dashboard'}
+                  currentScreen === 'frontend-docs' ? 'Frontend Docs' :
+                    currentScreen === 'backend-docs' ? 'Backend Docs' :
+                      'Dashboard'}
         </p>
       </div>
     </div>
